@@ -1,6 +1,6 @@
 {
   "name": "Mahesh Prasad Veg Restaurant",
-  "description": "A beautifully crafted, modern landing page for Mahesh Prasad Veg Restaurant in Mysuru, featuring their menu items, ratings, reviews, contact details, and location.",
+  "description": "An elegant and fully responsive online home for Mysuru's beloved heritage vegetarian restaurant—famous for authentic South Indian dosas, filter coffee, and meals.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

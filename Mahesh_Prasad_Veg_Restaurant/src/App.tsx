@@ -1,1258 +1,1155 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
-  MapPin, 
   Phone, 
+  MapPin, 
   Star, 
   Clock, 
-  Heart, 
-  Share2, 
-  Utensils, 
-  Plus, 
-  Minus, 
-  Sparkles, 
-  ThumbsUp, 
+  Coffee, 
+  UtensilsCrossed, 
   Check, 
-  Calendar, 
-  Users, 
+  ThumbsUp, 
+  MessageSquare, 
+  Heart, 
+  ChefHat, 
+  Sparkles, 
   ChevronRight, 
-  Coffee,
-  Leaf,
-  Copy,
-  Info
+  Compass, 
+  ClipboardCheck,
+  Map,
+  Share2
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 
-// Paths to the generated high-quality images
-const heroImage = "/src/assets/images/mahesh_prasad_hero_1781294769057.jpg";
-const ambianceImage = "/src/assets/images/mahesh_prasad_ambiance_1781294786165.jpg";
+// Import our professionally generated high-resolution assets
+import heroImage from "./assets/images/mahesh_prasad_hero_1781296442343.jpg";
+import vibeImage from "./assets/images/mahesh_prasad_vibe_1781296459334.jpg";
 
 interface MenuItem {
   id: string;
   name: string;
   price: number;
   description: string;
-  category: "all" | "breakfast" | "meals" | "drinks";
-  tag?: string;
-  rating: number;
-  calories: number;
+  isPopular?: boolean;
+  isSpicy?: boolean;
+  tags?: string[];
 }
 
-interface Review {
-  id: string;
-  author: string;
-  rating: number;
-  date: string;
-  comment: string;
-  isLocalGuide?: boolean;
+interface MenuCategory {
+  title: string;
+  icon: React.ReactNode;
+  items: MenuItem[];
 }
 
-const INITIAL_MENU: MenuItem[] = [
+const MENU_DATA: MenuCategory[] = [
   {
-    id: "m1",
-    name: "Special Masala Dosa",
-    price: 110,
-    description: "Crispy golden golden-brown crepe spread with signature spicy red Mysore chutney, stuffed with tempered potato palya & topped with clear pure ghee.",
-    category: "breakfast",
-    tag: "Patron's Favorite",
-    rating: 4.9,
-    calories: 380,
+    title: "Morning Specialties & Dosas",
+    icon: <UtensilsCrossed className="w-5 h-5 text-amber-600" />,
+    items: [
+      {
+        id: "d1",
+        name: "Mysuru Masala Dosa",
+        price: 95,
+        description: "Crispy dark-golden rice crepe smeared with our legendary signature spicy red garlic-lentil chutney, filled with soft spiced potato mash, served with pure coconut chutney and piping hot sambar.",
+        isPopular: true,
+        tags: ["Ghee-roasted", "Iconic Mysore Style"]
+      },
+      {
+        id: "d2",
+        name: "Steamed Idli-Vada Combo",
+        price: 75,
+        description: "Two ultra-fluffy, cloud-like steamed rice cakes paired with one crispy, golden, piping-hot savory black-lentil donut (Medu Vada). Accompanied by fresh coconut and mint chutneys.",
+        isPopular: true,
+        tags: ["Breakfast Classic", "Soft & Crispy"]
+      },
+      {
+        id: "d3",
+        name: "Khara Bath & Kesari Bath (Chow Chow Bath)",
+        price: 80,
+        description: "A perfect duo of Mysore breakfast: spiced, savory semolina cooked with fresh vegetables & ghee, alongside melt-in-mouth saffron-scented sweet pineapple semolina dessert.",
+        tags: ["Sweet & Savory Combo"]
+      },
+      {
+        id: "d4",
+        name: "Rava Onion Dosa",
+        price: 110,
+        description: "Lacy, crispy wheat semolina crepe studded with finely chopped roasted onions, green chilies, and a pinch of black pepper. Incredibly crunchy.",
+        tags: ["Extra Crispy"]
+      }
+    ]
   },
   {
-    id: "m2",
-    name: "Ghee Idli Vada Combo",
-    price: 95,
-    description: "Two pillow-soft steamed rice cakes and one super crispy deep-fried black gram donut. Served with spicy sambar & fresh coconut chutney.",
-    category: "breakfast",
-    tag: "Best Seller",
-    rating: 4.8,
-    calories: 290,
+    title: "Traditional Meals & Mains",
+    icon: <Sparkles className="w-5 h-5 text-amber-600" />,
+    items: [
+      {
+        id: "m1",
+        name: "South Indian Special Thali (Meals)",
+        price: 150,
+        description: "A royal feast served in traditional bowls: Fragrant Basmati/Sona Masuri rice, rich Sambar, house-special Tangy Rasam, two traditional dry vegetable curries (Palya), Papadum, fresh curd, pickle, and the sweet of the day.",
+        isPopular: true,
+        tags: ["Signature Feast", "Satisfying"]
+      },
+      {
+        id: "m2",
+        name: "Ghee Bisi Bele Bath",
+        price: 90,
+        description: "Mysuru's original comfort food. A slow-cooked, wholesome blend of rice, lentils, and mixed garden vegetables brewed under custom secret spices, finished with a generous ladle of pure melted ghee and crisps.",
+        isPopular: true,
+        tags: ["State Favorite"]
+      },
+      {
+        id: "m3",
+        name: "Curd Rice (Bagala Bath)",
+        price: 75,
+        description: "Perfect cooling meal. Soothing, creamy yogurt rice tempered with mustard seeds, curry leaves, ginger, pomegranate arils, and served with tangy mango pickle.",
+        tags: ["Cooling & Digestible"]
+      }
+    ]
   },
   {
-    id: "m3",
-    name: "Traditional Shavige Bath",
-    price: 80,
-    description: "Light and flavorful steamed vermicelli tossed with fresh local green peas, carrots, grated coconut, curry leaves, and tempered mustard seeds.",
-    category: "breakfast",
-    rating: 4.5,
-    calories: 240,
-  },
-  {
-    id: "m4",
-    name: "Golden Cashew Rava Dosa",
-    price: 120,
-    description: "Lacy, crispy semolina crepe seasoned with black peppercorns, cumin seed, ginger slices, and loaded with roasted whole cashews.",
-    category: "breakfast",
-    rating: 4.6,
-    calories: 420,
-  },
-  {
-    id: "m5",
-    name: "Special South Indian Meals",
-    price: 180,
-    description: "Our signature afternoon feast. Features hot steamed premium rice, traditional sambar, rasam, kootu, poriyal, papad, fresh curd, and an authentic sweet.",
-    category: "meals",
-    tag: "Unlimited Rice Top-up",
-    rating: 4.9,
-    calories: 720,
-  },
-  {
-    id: "m6",
-    name: "Mysuru Bisi Bele Bath",
-    price: 110,
-    description: "Classic spicy hot lentil and rice mash slowly cooked with mixed vegetables, tamarind pulp, ghee, served with crisp potato wafers.",
-    category: "meals",
-    tag: "Heritage Dish",
-    rating: 4.7,
-    calories: 480,
-  },
-  {
-    id: "m7",
-    name: "Traditional Curd Rice",
-    price: 85,
-    description: "Creamy, refreshing cooked rice folded into fresh house-made curd, tempered milk, ginger, green chilies, and topped with juicy sweet pomegranate seeds.",
-    category: "meals",
-    rating: 4.4,
-    calories: 310,
-  },
-  {
-    id: "m8",
-    name: "Aromatic Filter Coffee",
-    price: 45,
-    description: "Fabulous chicory-blend coffee brewed in traditional brass filters, combined with bubbling hot milk, and frothed beautifully from a height.",
-    category: "drinks",
-    tag: "Legendary Brew",
-    rating: 5.0,
-    calories: 90,
-  },
-  {
-    id: "m9",
-    name: "Saffron Badam Milk",
-    price: 60,
-    description: "Slowly simmered whole milk blended with pure organic almond paste, infused with real Kashmiri saffron strands and crushed green cardamom.",
-    category: "drinks",
-    rating: 4.7,
-    calories: 160,
-  },
-  {
-    id: "m10",
-    name: "Special Desi Ghee Mysore Pak",
-    price: 70,
-    description: "The traditional sweet of the Mysore Royalty. Soft, golden chunks made of roasted gram flour, generous pure desi ghee, and syrup.",
-    category: "drinks",
-    tag: "Royal Heritage Dessert",
-    rating: 4.9,
-    calories: 220,
-  }
-];
-
-const INITIAL_REVIEWS: Review[] = [
-  {
-    id: "r1",
-    author: "Ramesh K. Hegde",
-    rating: 5,
-    date: "1 week ago",
-    comment: "The absolute best Masala Dosa in Mysuru! Period. Extremely thin, crispy, and the red chutney they smear inside has a unique rich taste. Filter coffee is spectacular. No wonder it is ranked #1.",
-    isLocalGuide: true
-  },
-  {
-    id: "r2",
-    author: "Shreya Mahendra",
-    rating: 5,
-    date: "2 weeks ago",
-    comment: "A heritage restaurant near the landmark Ballal Circle. Yes, it has a crowd, but you get your food within 5 minutes. The Ghee Idli melts in your mouth and the coconut chutney is fresh and chilled.",
-    isLocalGuide: false
-  },
-  {
-    id: "r3",
-    author: "Devanand Sree",
-    rating: 4,
-    date: "3 weeks ago",
-    comment: "Highly cost-effective and completely authentic South Indian cuisine. Their Bisi Bele Bath is robust and deeply flavorful. A Mysuru food spot you absolutely cannot miss.",
-    isLocalGuide: true
+    title: "Signature Brews & Sweets",
+    icon: <Coffee className="w-5 h-5 text-amber-600" />,
+    items: [
+      {
+        id: "b1",
+        name: "Authentic Mysuru Filter Coffee",
+        price: 35,
+        description: "The pride of Southern Karnataka. Dark, freshly roasted chicory-coffee blend slow-dripped, frothed expertly with boiling whole milk from a height, served steaming in a traditional brass tumbler & dabarah.",
+        isPopular: true,
+        tags: ["Must Try", "Perfect Froth"]
+      },
+      {
+        id: "b2",
+        name: "Special Masala Chai",
+        price: 30,
+        description: "Strong milk tea infused with crushed ginger, cardamom, and fresh cloves. Perfect companion for a chilly Mysuru afternoon.",
+        tags: ["Freshly Brewed"]
+      },
+      {
+        id: "b3",
+        name: "Special Mysurupa",
+        price: 45,
+        description: "The classic royal sweet of Mysuru. Melt-in-the-mouth, porous, golden-brown sweet made from gram flour, pure sugar syrup, and lavish amounts of aromatic desi ghee.",
+        isPopular: true,
+        tags: ["Royal Sweet"]
+      }
+    ]
   }
 ];
 
 export default function App() {
-  const [selectedCategory, setSelectedCategory] = useState<"all" | "breakfast" | "meals" | "drinks">("all");
-  const [tray, setTray] = useState<{ [key: string]: number }>({});
-  const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
-  const [activeTab, setActiveTab] = useState<"menu" | "about" | "reviews">("menu");
+  const [activeCategory, setActiveCategory] = useState<number>(0);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(MENU_DATA[0].items[0]);
   
-  // Review form state
+  // Dynamic user reviews state initialized with some real-looking content
+  const [reviews, setReviews] = useState([
+    {
+      id: 1,
+      author: "Ranganath Swamy",
+      rating: 5,
+      date: "2 days ago",
+      comment: "Best Masala Dosa in Mysuru hands down. The red chutney is extremely authentic and has the perfect balance of spice and garlic flavor. The filter coffee served in brass is excellent!",
+      likes: 42,
+      isLiked: false
+    },
+    {
+      id: 2,
+      author: "Priya Nair",
+      rating: 5,
+      date: "1 week ago",
+      comment: "Whenever I visit Mysuru from Bangalore, Mahesh Prasad is my first breakfast stop. Clean, fast service and very pocket friendly. Sambar is piping hot and they never hesitate to refill it.",
+      likes: 29,
+      isLiked: false
+    },
+    {
+      id: 3,
+      author: "David Miller",
+      rating: 4,
+      date: "3 weeks ago",
+      comment: "We tried the South Indian Thali. So many flavors and everything tasted fresh! The place can be crowded during lunchtime but the queue moves very fast. Highly recommended for authentic veg cuisine.",
+      likes: 15,
+      isLiked: false
+    }
+  ]);
+
+  // Review form submission state
   const [newAuthor, setNewAuthor] = useState("");
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState("");
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [submittedReview, setSubmittedReview] = useState(false);
 
-  // Enquiry/Catering Form State
-  const [guestName, setGuestName] = useState("");
-  const [guestPhone, setGuestPhone] = useState("");
-  const [guestCount, setGuestCount] = useState("10");
-  const [enquiryDate, setEnquiryDate] = useState("");
-  const [enquirySuccess, setEnquirySuccess] = useState(false);
+  // Table Booking inquiry state
+  const [bookingName, setBookingName] = useState("");
+  const [bookingPhone, setBookingPhone] = useState("");
+  const [bookingGuestCount, setBookingGuestCount] = useState("2");
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("");
+  const [bookingSubmitted, setBookingSubmitted] = useState(false);
 
-  // General Notification Alert State
-  const [notifMessage, setNotifMessage] = useState("");
-
-  // Opening hours check
-  const [isOpen, setIsOpen] = useState(true);
-  const [timeString, setTimeString] = useState("");
-
-  useEffect(() => {
-    // Standard Mysuru Restaurant hours: 7:00 AM to 10:30 PM (22:30)
-    const checkStatus = () => {
-      const now = new Date();
-      // Calculate local time in India (UTC+5:30)
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const istTime = new Date(utc + (3600000 * 5.5));
-      
-      const hours = istTime.getHours();
-      const minutes = istTime.getMinutes();
-      const decimalTime = hours + minutes / 60;
-
-      const openingHour = 7.0; // 7:00 AM
-      const closingHour = 22.5; // 10:30 PM
-
-      const formattedMin = minutes < 10 ? `0${minutes}` : minutes;
-      const ampm = hours >= 12 ? "PM" : "AM";
-      const displayHours = hours % 12 || 12;
-      
-      setTimeString(`${displayHours}:${formattedMin} ${ampm} (IST)`);
-      setIsOpen(decimalTime >= openingHour && decimalTime <= closingHour);
-    };
-
-    checkStatus();
-    const interval = setInterval(checkStatus, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Sync tray items to localStorage or just keep react state
-  const addToTray = (id: string, name: string) => {
-    setTray(prev => {
-      const current = prev[id] || 0;
-      return { ...prev, [id]: current + 1 };
-    });
-    triggerNotification(`Added ${name} to your custom Feast Tray!`);
-  };
-
-  const removeFromTray = (id: string) => {
-    setTray(prev => {
-      const current = prev[id] || 0;
-      if (current <= 1) {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      }
-      return { ...prev, [id]: current - 1 };
-    });
-  };
-
-  const clearTray = () => {
-    setTray({});
-    triggerNotification("Feast Tray cleared.");
-  };
-
-  const triggerNotification = (msg: string) => {
-    setNotifMessage(msg);
-    setTimeout(() => {
-      setNotifMessage("");
-    }, 3500);
-  };
-
-  // Compute tray statistics
-  const trayItems = Object.keys(tray).map(id => {
-    const dish = INITIAL_MENU.find(m => m.id === id);
-    return {
-      dish,
-      quantity: tray[id],
-    };
-  }).filter(item => item.dish !== undefined) as { dish: MenuItem; quantity: number }[];
-
-  const totalPrice = trayItems.reduce((acc, item) => acc + (item.dish.price * item.quantity), 0);
-  const totalCalories = trayItems.reduce((acc, item) => acc + (item.dish.calories * item.quantity), 0);
-
-  // Submit visual review
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  // Handle new review submission
+  const handleAddReview = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAuthor.trim() || !newComment.trim()) return;
 
-    const newRevObj: Review = {
-      id: `custom-${Date.now()}`,
+    const newRevObj = {
+      id: Date.now(),
       author: newAuthor,
       rating: newRating,
       date: "Just now",
       comment: newComment,
-      isLocalGuide: false
+      likes: 0,
+      isLiked: false
     };
 
-    setReviews(prev => [newRevObj, ...prev]);
+    setReviews([newRevObj, ...reviews]);
     setNewAuthor("");
+    setNewRating(5);
     setNewComment("");
-    setReviewSubmitted(true);
-    triggerNotification("Thank you! Your feedback has been posted successfully.");
-    setTimeout(() => setReviewSubmitted(false), 5000);
+    setSubmittedReview(true);
+    setTimeout(() => setSubmittedReview(false), 5000);
   };
 
-  // Submit Catering Form
-  const handleEnquirySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!guestName.trim() || !guestPhone.trim() || !enquiryDate) return;
+  // Handle like reviews
+  const handleLikeReview = (id: number) => {
+    setReviews(reviews.map(rev => {
+      if (rev.id === id) {
+        return {
+          ...rev,
+          likes: rev.isLiked ? rev.likes - 1 : rev.likes + 1,
+          isLiked: !rev.isLiked
+        };
+      }
+      return rev;
+    }));
+  };
 
-    setEnquirySuccess(true);
-    triggerNotification("Inquiry Sent! Our catering manager will contact you within 2 hours.");
+  // Handle Booking inquiry submission
+  const handleBookingConfirm = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookingName.trim() || !bookingPhone.trim() || !bookingDate) return;
+    setBookingSubmitted(true);
     setTimeout(() => {
-      setGuestName("");
-      setGuestPhone("");
-      setEnquiryDate("");
-      setEnquirySuccess(false);
+      setBookingSubmitted(false);
+      setBookingName("");
+      setBookingPhone("");
+      setBookingDate("");
+      setBookingTime("");
     }, 6000);
   };
 
-  // Copy Address helper
+  // Copy address utility
+  const [copied, setCopied] = useState(false);
   const copyAddress = () => {
-    const addressText = "Ballal Cir, near RTO Office, Chamarajapura, Chamarajapuram Mohalla, Lakshmipuram, Mysuru, Karnataka 570005";
-    navigator.clipboard.writeText(addressText);
-    triggerNotification("Restaurant address copied to clipboard!");
+    navigator.clipboard.writeText("Ballal Cir, near RTO Office, Chamarajapura, Chamarajapuram Mohalla, Lakshmipuram, Mysuru, Karnataka 570005");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
   };
 
-  const filteredMenu = selectedCategory === "all" 
-    ? INITIAL_MENU 
-    : INITIAL_MENU.filter(item => item.category === selectedCategory);
-
   return (
-    <div className="min-h-screen bg-[#FAF6F0] font-sans text-stone-800 antialiased selection:bg-amber-200 selection:text-amber-900">
+    <div id="landing-container" className="min-h-screen bg-warm-pattern font-sans text-stone-800 selection:bg-amber-200 selection:text-amber-900">
       
-      {/* Floating Notification Toast */}
-      <AnimatePresence>
-        {notifMessage && (
-          <motion.div 
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-stone-900 text-[#FAF6F0] px-5 py-3.5 rounded-xl shadow-2xl border border-white/10 max-w-sm"
-          >
-            <Sparkles className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
-            <p className="text-sm font-medium">{notifMessage}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Top Notice Banner */}
-      <div className="bg-emerald-900 text-white py-2 px-4 text-xs font-medium tracking-wide flex justify-between items-center sm:px-8">
-        <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 relative">
-            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOpen ? "bg-green-400" : "bg-orange-400"}`}></span>
-            <span className={`relative inline-flex rounded-full h-2 w-2 ${isOpen ? "bg-green-500" : "bg-orange-500"}`}></span>
-          </span>
-          <span className="opacity-95">
-            {isOpen ? "Serving Live: Warm & Authentically Flavored Mysurn Tiffins" : "Closed Now: Opens tomorrow at 7:00 AM"}
-          </span>
-        </div>
-        <div className="hidden sm:flex items-center gap-4 text-[11px] opacity-80">
-          <span>📍 Ballal Circle, Mysuru</span>
-          <span>📞 0821 233 0820</span>
+      {/* Dynamic Top Announcement Strip */}
+      <div id="announcement-bar" className="bg-amber-600 text-white text-xs md:text-sm py-2 px-4 font-medium tracking-wide">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center space-y-1 sm:space-y-0">
+          <div className="flex items-center space-x-2">
+            <span className="inline-block w-2.5 h-2.5 bg-green-500 border border-white rounded-full animate-pulse"></span>
+            <span>100% Pure Vegetarian South Indian Culinary Heritage in Mysuru</span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <a href="tel:08212330820" className="hover:underline flex items-center space-x-1">
+              <Phone className="w-3.5 h-3.5 inline" />
+              <span>Call: 0821 233 0820</span>
+            </a>
+            <span className="hidden md:inline">|</span>
+            <span className="hidden md:inline">Hours: 6:30 AM – 10:30 PM</span>
+          </div>
         </div>
       </div>
 
-      {/* Navbar Header */}
-      <header className="sticky top-0 z-40 bg-[#FAF6F0]/90 backdrop-blur-md border-b border-stone-200/60 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between sm:px-6 lg:px-8">
+      {/* Main Header / Navigation */}
+      <header id="main-header" className="sticky top-0 z-40 bg-white/95 backdrop-blur-md shadow-sm border-b border-stone-200/60 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-emerald-800 text-[#FAF6F0] flex items-center justify-center font-serif text-lg font-bold tracking-tight shadow-md">
-              MP
+          {/* Logo Brand Brand */}
+          <div className="flex items-center space-x-3">
+            {/* Indian Vegetarian Emblem (Green dot in white circle in green square outline) */}
+            <div className="w-9 h-9 border border-emerald-600 flex items-center justify-center p-1 bg-white rounded-md flex-shrink-0" title="100% Pure Vegetarian">
+              <div className="w-5 h-5 bg-emerald-600 rounded-full"></div>
             </div>
+            
             <div>
-              <h1 className="font-serif text-lg font-bold tracking-tight text-stone-900 leading-none">
+              <h1 className="text-xl md:text-2xl font-serif font-black tracking-tight text-stone-900 leading-none">
                 Mahesh Prasad
               </h1>
-              <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-widest flex items-center gap-1 mt-1">
-                <Leaf className="w-2.5 h-2.5 fill-current" /> 100% Vegetarian
-              </span>
+              <p className="text-xs uppercase tracking-widest text-amber-700 font-bold mt-0.5">Veg Restaurant</p>
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-stone-600">
-            <button 
-              onClick={() => { setActiveTab("menu"); document.getElementById("main-section")?.scrollIntoView({ behavior: 'smooth' }); }}
-              className={`hover:text-stone-900 transition-colors ${activeTab === 'menu' ? "text-amber-800 border-b-2 border-amber-700 pb-1" : ""}`}
-            >
-              Interactive Menu
-            </button>
-            <button 
-              onClick={() => { setActiveTab("about"); document.getElementById("main-section")?.scrollIntoView({ behavior: 'smooth' }); }}
-              className={`hover:text-stone-900 transition-colors ${activeTab === 'about' ? "text-amber-800 border-b-2 border-amber-700 pb-1" : ""}`}
-            >
-              Our Ambiance & Story
-            </button>
-            <button 
-              onClick={() => { setActiveTab("reviews"); document.getElementById("main-section")?.scrollIntoView({ behavior: 'smooth' }); }}
-              className={`hover:text-stone-900 transition-colors ${activeTab === 'reviews' ? "text-amber-800 border-b-2 border-amber-700 pb-1" : ""}`}
-            >
-              Patron Reviews ({reviews.length})
-            </button>
-          </nav>
-
-          <div className="flex items-center gap-2">
+          {/* Quick Metrics Badge & Direct CTA */}
+          <div className="flex items-center space-x-4">
+            {/* Rating badge */}
             <a 
-              href="https://www.google.com/maps/search/?api=1&query_place_id=ChIJ776TqABwrzsRJlFuzZSXo-I&query=Mahesh%20Prasad%20Veg%20Restaurant" 
+              href="https://www.google.com/maps/search/?api=1&query_place_id=ChIJ776TqABwrzsRJlFuzZSXo-I&query=Mahesh%20Prasad%20Veg%20Restaurant"
               target="_blank" 
               rel="noopener noreferrer"
-              className="bg-stone-900 hover:bg-stone-800 text-white rounded-xl py-2 px-4 text-xs font-bold transition-all inline-flex items-center gap-1.5 shadow-sm"
-              id="nav-directions-btn"
+              className="hidden sm:flex items-center space-x-2.5 bg-stone-150 border border-stone-200 px-3 py-1.5 rounded-full hover:bg-stone-100 transition-colors"
             >
-              <MapPin className="w-3.5 h-3.5" />
-              <span>Get Directions</span>
+              <div className="flex items-center space-x-0.5">
+                {[1, 2, 3, 4].map((i) => (
+                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-500" />
+                ))}
+                <Star className="w-4 h-4 fill-amber-400 text-amber-500 opacity-60" />
+              </div>
+              <div className="text-xs text-left">
+                <span className="font-bold text-stone-900 block leading-none">4.1 Star Rating</span>
+                <span className="text-stone-550 block leading-none mt-0.5">3,914 Google Reviews</span>
+              </div>
+            </a>
+
+            <a 
+              href="#menu" 
+              className="bg-amber-700 hover:bg-amber-800 text-white text-sm font-semibold px-4 md:px-5 py-2.5 rounded-lg shadow-sm transition-all hover:shadow hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5"
+            >
+              <span>Explore Menu</span>
+              <ChevronRight className="w-4 h-4" />
             </a>
           </div>
+
         </div>
       </header>
 
-      {/* Hero Showcase Section */}
-      <section className="relative overflow-hidden py-12 md:py-20 lg:py-24 bg-gradient-to-b from-[#FAF6F0] to-[#EFEAE2]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* Hero section */}
+      <section id="hero" className="relative bg-stone-900 text-white overflow-hidden py-16 md:py-24">
+        
+        {/* Ambient Dark Overlay on background image */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={heroImage} 
+            alt="Mouth-watering South Indian Dosa and Sambar feast" 
+            className="w-full h-full object-cover opacity-35 object-center scale-105 motion-safe:animate-subtle-zoom"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-900/90 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
-          {/* Hero Left Content */}
-          <div className="lg:col-span-7 flex flex-col justify-center space-y-6">
-            <div className="inline-flex items-center gap-2 bg-amber-100 border border-amber-200 text-amber-900 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide w-fit animate-pulse">
-              <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-              <span>Ranked #1 Pure Veg Restaurant in Mysuru</span>
-            </div>
+          <div className="lg:col-span-7 space-y-6">
+            <span className="inline-flex items-center space-x-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+              <ChefHat className="w-3.5 h-3.5" />
+              <span>Ranked #1 Vegetarian Landmark in Mysuru</span>
+            </span>
 
-            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-black text-stone-900 tracking-tight leading-[110%]">
-              Savor the Authentic <br />
-              <span className="text-emerald-800">Heritage Delicacies</span> <br />
-              of Royal Mysuru.
-            </h1>
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-black tracking-tight leading-tight [text-shadow:_0_2px_10px_rgba(0,0,0,0.5)]">
+              Taste the Authentic <br />
+              <span className="text-amber-400">Heritage of Mysuru</span>
+            </h2>
 
-            <p className="text-stone-600 max-w-xl text-base sm:text-lg leading-relaxed">
-              Serving our community near Ballal Circle with time-honored South Indian tiffins, crispy legendary Masala Dosas, hearty traditional meals, and rich frothy filter coffee since generations. Pure flavor, pure vegetable, zero compromise.
+            <p className="text-lg text-stone-200 font-sans max-w-xl leading-relaxed">
+              Step into the aromatic legacy of pure ghee dosas, steaming soft idlis, and custom slow-dripped filter coffee. Lovingly serving Mysuru residents and global travelers under authentic quality, pocket-friendly comfort, and pristine traditional hospitality.
             </p>
 
-            {/* Quick Metrics */}
-            <div className="grid grid-cols-3 gap-4 py-2 border-y border-stone-300/60 max-w-lg">
-              <div>
-                <div className="font-serif text-2xl font-bold text-stone-900">4.1 <span className="text-amber-500 text-lg">★</span></div>
-                <div className="text-[11px] text-stone-500 uppercase tracking-widest font-semibold mt-0.5">Google Rating</div>
-              </div>
-              <div>
-                <div className="font-serif text-2xl font-bold text-stone-900">3,914</div>
-                <div className="text-[11px] text-stone-500 uppercase tracking-widest font-semibold mt-0.5">Patron Reviews</div>
-              </div>
-              <div>
-                <div className="font-serif text-2xl font-bold text-stone-800 flex items-center gap-1">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-                  <span>Open</span>
-                </div>
-                <div className="text-[11px] text-stone-500 uppercase tracking-widest font-semibold mt-0.5">7:00 AM - 10:30 PM</div>
-              </div>
-            </div>
-
-            {/* Action CTAs */}
-            <div className="flex flex-wrap gap-4 pt-2">
-              <button 
-                onClick={() => { setActiveTab("menu"); document.getElementById("main-section")?.scrollIntoView({ behavior: 'smooth' }); }}
-                className="bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl px-7 py-4 text-sm font-bold shadow-lg shadow-emerald-900/10 transition-all flex items-center gap-2 hover:translate-y-[-1px]"
-                id="hero-order-preview-btn"
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <a 
+                href="#menu" 
+                className="bg-amber-500 hover:bg-amber-400 text-stone-950 text-base font-bold text-center px-8 py-4 rounded-xl shadow-lg transition-all hover:scale-105"
               >
-                <Utensils className="w-4 h-4" />
-                <span>Explore Interactive Menu</span>
-              </button>
-              
+                View Culinary Menu
+              </a>
               <a 
                 href="https://www.google.com/maps/search/?api=1&query_place_id=ChIJ776TqABwrzsRJlFuzZSXo-I&query=Mahesh%20Prasad%20Veg%20Restaurant" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="bg-white hover:bg-stone-50 text-stone-900 border border-stone-300 rounded-xl px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 hover:shadow-xs"
+                className="bg-stone-800/80 hover:bg-stone-700/90 text-white border border-stone-700/60 text-base font-semibold text-center px-8 py-4 rounded-xl transition-all hover:scale-105 flex items-center justify-center space-x-2"
               >
-                <MapPin className="w-4 h-4 text-emerald-800" />
-                <span>Locate Near Ballal Circle</span>
+                <Compass className="w-5 h-5 text-amber-400" />
+                <span>Get Driving Directions</span>
               </a>
             </div>
 
-            {/* Address Row Quick Highlight */}
-            <div className="flex items-center gap-2.5 text-xs text-stone-500 pt-2 lg:pt-4">
-              <Info className="w-4 h-4 text-amber-700 shrink-0" />
-              <p>Located near the <strong>RTO Office, Chamarajapura</strong>. Digital portal launching proudly to serve Mysuru.</p>
+            {/* Quick specifications counts */}
+            <div className="grid grid-cols-3 gap-6 pt-6 border-t border-stone-800">
+              <div>
+                <span className="block text-2xl sm:text-3xl font-bold text-amber-400 font-serif">4.1 <span className="text-sm text-stone-300">★</span></span>
+                <span className="text-xs text-stone-300 uppercase tracking-wider font-semibold">Google Rating</span>
+              </div>
+              <div>
+                <span className="block text-2xl sm:text-3xl font-bold text-amber-400 font-serif">3,900+</span>
+                <span className="text-xs text-stone-300 uppercase tracking-wider font-semibold">Happy Reviews</span>
+              </div>
+              <div>
+                <span className="block text-2xl sm:text-3xl font-bold text-amber-400 font-serif">100%</span>
+                <span className="text-xs text-stone-300 uppercase tracking-wider font-semibold">Pure Vegetarian</span>
+              </div>
             </div>
+
           </div>
 
-          {/* Hero Right Visual Column */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative mx-auto max-w-md lg:max-w-none">
+          {/* Quick Info Overlay Card - Desktop Right */}
+          <div className="lg:col-span-5 bg-white text-stone-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-stone-100 flex flex-col justify-between">
+            <h3 className="text-xl font-serif font-bold text-stone-900 border-b pb-4 mb-4 flex items-center justify-between">
+              <span>Quick Details</span>
+              <span className="text-emerald-700 text-xs font-bold uppercase tracking-wider bg-emerald-50 border border-emerald-200 px-2 py-1 rounded">Open Now</span>
+            </h3>
+
+            <div className="space-y-5">
               
-              {/* Backing Accent Panel */}
-              <div className="absolute -inset-2 bg-amber-500/10 rounded-3xl transform rotate-2"></div>
-              
-              {/* Main Photo Wrapper */}
-              <div className="relative bg-stone-900 rounded-2xl overflow-hidden shadow-2xl border-4 border-[#FAF6F0]">
-                <img 
-                  src={heroImage} 
-                  alt="Delicious Traditional South Indian Breakfast at Mahesh Prasad Veg Restaurant" 
-                  className="w-full h-[400px] object-cover hover:scale-105 transition-transform duration-700"
-                  referrerPolicy="no-referrer"
-                  id="hero-banner-main-image"
-                />
-                
-                {/* Floating Card: Live Info */}
-                <div className="absolute bottom-4 left-4 right-4 bg-[#FAF6F0]/95 backdrop-blur-xs p-4 rounded-xl shadow-lg border border-stone-200 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-amber-500/10 text-amber-800 flex items-center justify-center font-bold">
-                      <Coffee className="w-5.5 h-5.5" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-stone-500 uppercase tracking-wider">Now Brewing</h4>
-                      <p className="text-sm font-bold text-stone-900">Iconic Brass Filter Coffee</p>
-                    </div>
-                  </div>
-                  <div className="bg-emerald-800 text-white rounded-lg px-2.5 py-1 text-xs font-bold">
-                    ₹45 Only
-                  </div>
+              <div className="flex items-start space-x-4">
+                <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-5 h-5 text-amber-700" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-stone-400">Address</h4>
+                  <p className="text-sm font-medium text-stone-800 leading-relaxed mt-0.5">
+                    Ballal Cir, near RTO Office, Chamarajapura, Chamarajapuram Mohalla, Lakshmipuram, Mysuru, Karnataka 570005
+                  </p>
+                  <button 
+                    onClick={copyAddress}
+                    className="mt-1.5 text-xs text-amber-700 hover:text-amber-800 font-bold inline-flex items-center space-x-1 hover:underline"
+                  >
+                    <span>{copied ? "✓ Copied to clipboard" : "Copy full address"}</span>
+                  </button>
                 </div>
               </div>
 
-              {/* Gold Label Detail badge */}
-              <div className="absolute -top-4 -right-4 bg-amber-500 text-stone-950 font-serif font-black p-4 rounded-full shadow-xl flex flex-col items-center justify-center w-20 h-20 rotate-12 border-2 border-white">
-                <span className="text-[10px] uppercase font-sans font-bold tracking-widest text-[#FAF6F0]">No 1</span>
-                <span className="text-xl">VEG</span>
-                <span className="text-[9px] uppercase font-sans font-semibold text-[#FAF6F0] leading-none">Mysore</span>
+              <div className="flex items-start space-x-4">
+                <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-5 h-5 text-amber-700" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-stone-400">Telephone Line</h4>
+                  <p className="text-sm font-bold text-stone-900 mt-0.5">
+                    <a href="tel:08212330820" className="hover:underline text-amber-800">0821 233 0820</a>
+                  </p>
+                  <p className="text-xs text-stone-500">Tap to dial from mobile device</p>
+                </div>
               </div>
+
+              <div className="flex items-start space-x-4">
+                <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5 text-amber-700" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-stone-400">Service Hours</h4>
+                  <p className="text-sm font-medium text-stone-900 mt-0.5">
+                    Everyday: <span className="font-bold">6:30 AM – 10:30 PM</span>
+                  </p>
+                  <p className="text-xs text-stone-500">Perfect for early breakfast & late dinner</p>
+                </div>
+              </div>
+
             </div>
+
+            <div className="mt-6 pt-5 border-t border-stone-100 flex items-center justify-between">
+              <span className="text-xs text-stone-500">Found via query: &quot;restaurant in Mysuru&quot;</span>
+              <span className="text-xs font-semibold text-stone-700 flex items-center space-x-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                <span>Active Dine-in</span>
+              </span>
+            </div>
+
           </div>
 
         </div>
       </section>
 
-      {/* Live Status and Dynamic Location Card Strip */}
-      <section className="bg-emerald-950 text-[#FAF6F0] py-6 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-emerald-800/80 flex items-center justify-center shrink-0">
-              <Clock className="w-6 h-6 text-amber-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-base">Weekly Timings (Every Single Day)</h3>
-                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${isOpen ? "bg-emerald-500 text-white" : "bg-amber-600 text-white"}`}>
-                  {isOpen ? "OPEN NOW" : "CLOSED NOW"}
-                </span>
-              </div>
-              <p className="text-emerald-200 text-sm mt-0.5">
-                Morning Session: 7:00 AM – 11:30 AM | Afternoon & Evening: 12:00 PM – 10:30 PM
-              </p>
-            </div>
-          </div>
-
-          <div className="w-full md:w-auto flex items-center justify-between md:justify-end gap-4 border-t border-emerald-900 md:border-0 pt-4 md:pt-0">
-            <div className="text-right hidden lg:block">
-              <h4 className="text-[11px] uppercase tracking-widest text-emerald-300 font-bold">Local Time Check</h4>
-              <p className="text-sm font-mono mt-0.5 text-stone-300">{timeString || "1:05 PM IST"}</p>
-            </div>
-            <button 
-              onClick={copyAddress}
-              className="bg-emerald-900 hover:bg-emerald-800 text-emerald-100 text-xs font-bold rounded-xl py-2.5 px-4 inline-flex items-center gap-2 border border-emerald-800 transition-all"
-              id="copy-address-badge-btn"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              <span>Copy Full Address</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Feature Content Grid: Menu / Ambiance / Reviews Toggle */}
-      <main id="main-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      {/* Main Content Info Sections */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-24">
         
-        {/* Navigation Tabs (Sub-Header) */}
-        <div className="flex items-center justify-center border-b border-stone-300/80 mb-12">
-          <div className="flex gap-2 sm:gap-6">
-            <button 
-              onClick={() => setActiveTab("menu")}
-              className={`pb-4 px-4 text-base font-bold tracking-tight relative transition-all flex items-center gap-2 ${activeTab === "menu" ? "text-emerald-900 font-extrabold" : "text-stone-500 hover:text-stone-900"}`}
-              id="tab-toggle-menu"
-            >
-              <Utensils className={`w-4 h-4 ${activeTab === 'menu' ? 'text-emerald-800' : 'text-stone-400'}`} />
-              <span>Interactive Menu & Feast Tray</span>
-              {activeTab === "menu" && (
-                <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-800" />
-              )}
-            </button>
-            
-            <button 
-              onClick={() => setActiveTab("about")}
-              className={`pb-4 px-4 text-base font-bold tracking-tight relative transition-all flex items-center gap-2 ${activeTab === "about" ? "text-emerald-900 font-extrabold" : "text-stone-500 hover:text-stone-900"}`}
-              id="tab-toggle-about"
-            >
-              <Leaf className={`w-4 h-4 ${activeTab === 'about' ? 'text-emerald-800' : 'text-stone-400'}`} />
-              <span>Our Heritage & Ambiance</span>
-              {activeTab === "about" && (
-                <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-800" />
-              )}
-            </button>
-
-            <button 
-              onClick={() => setActiveTab("reviews")}
-              className={`pb-4 px-4 text-base font-bold tracking-tight relative transition-all flex items-center gap-2 ${activeTab === "reviews" ? "text-emerald-900 font-extrabold" : "text-stone-500 hover:text-stone-900"}`}
-              id="tab-toggle-reviews"
-            >
-              <Star className={`w-4 h-4 ${activeTab === 'reviews' ? 'text-amber-500 fill-amber-500' : 'text-stone-400'}`} />
-              <span>Patron Reviews ({reviews.length})</span>
-              {activeTab === "reviews" && (
-                <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-800" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Content Display */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        {/* Highlight Feature: The Menu */}
+        <section id="menu" className="scroll-mt-24 space-y-8">
           
-          {/* Tab Content - Left Side (Vast Section) */}
-          <div className="lg:col-span-8 space-y-10">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="text-amber-700 font-bold uppercase text-xs tracking-widest block font-sans">Traditional Delicacies</span>
+            <h3 className="text-3xl sm:text-4xl font-serif font-black tracking-tight text-stone-950">
+              Our Curated Menu Favorites
+            </h3>
+            <p className="text-stone-600 text-sm sm:text-base">
+              Freshly prepared daily with the finest indigenous rice grains, home-ground roasted spice blends, and generous amounts of pure ghee. Authentic Southern flavours.
+            </p>
+            {/* Indian Vegetarian Emblem Center Line */}
+            <div className="flex justify-center items-center py-2">
+              <div className="h-px bg-stone-300 w-16"></div>
+              <div className="w-3.5 h-3.5 border border-emerald-600 flex items-center justify-center p-0.5 mx-3 bg-white">
+                <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full"></div>
+              </div>
+              <div className="h-px bg-stone-300 w-16"></div>
+            </div>
+          </div>
+
+          {/* Interactive Menu Container */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* TAB: MENU SECTION COMPONENT */}
-            {activeTab === "menu" && (
-              <div className="space-y-8">
-                
-                {/* Menu category filters */}
-                <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-3 rounded-2xl border border-stone-200/80 shadow-xs">
-                  <span className="text-xs font-bold text-stone-500 uppercase tracking-widest pl-2">Filter Flavors:</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      { id: "all", label: "All Items" },
-                      { id: "breakfast", label: "Tiffins (Breakfast)" },
-                      { id: "meals", label: "Heritage Meals (Lunch/Dinner)" },
-                      { id: "drinks", label: "Beverages & Desserts" },
-                    ].map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => setSelectedCategory(cat.id as any)}
-                        className={`text-xs font-bold px-3 py-2 rounded-xl transition-all ${selectedCategory === cat.id ? "bg-emerald-800 text-white shadow-xs" : "bg-transparent text-stone-600 hover:bg-stone-100"}`}
-                      >
-                        {cat.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {/* Category Navigation Controls */}
+            <div className="lg:col-span-4 space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-stone-400 px-2">Menu Categories</h4>
+              <div className="flex flex-row overflow-x-auto lg:flex-col gap-2 pb-3 lg:pb-0 scrollbar-none">
+                {MENU_DATA.map((cat, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setActiveCategory(idx);
+                      // Set default item to display on desktop panel
+                      if (cat.items.length > 0) setSelectedItem(cat.items[0]);
+                    }}
+                    className={`flex items-center space-x-3 px-4 py-3.5 rounded-xl text-left font-serif font-bold text-sm sm:text-base border transition-all whitespace-nowrap lg:whitespace-normal flex-shrink-0 w-auto lg:w-full ${
+                      activeCategory === idx 
+                        ? "bg-amber-500 border-amber-600 text-stone-950 shadow-md translate-x-1" 
+                        : "bg-white border-stone-200 text-stone-800 hover:bg-stone-50"
+                    }`}
+                  >
+                    <span className={`p-1.5 rounded-lg bg-white ${activeCategory === idx ? "shadow-sm text-stone-900" : ""}`}>
+                      {cat.icon}
+                    </span>
+                    <span className="flex-1">{cat.title}</span>
+                  </button>
+                ))}
+              </div>
 
-                {/* Grid list of food items */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {filteredMenu.map((item) => {
-                    const quantity = tray[item.id] || 0;
-                    return (
-                      <div 
-                        key={item.id}
-                        className="bg-white rounded-2xl p-5 border border-stone-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
-                      >
-                        {item.tag && (
-                          <span className="absolute -top-1 -right-1 bg-amber-500 text-stone-950 text-[9px] font-bold uppercase tracking-widest leading-none px-2.5 py-1.5 rounded-bl-xl border-b border-l border-white/20 select-none">
-                            {item.tag}
-                          </span>
-                        )}
+              {/* Special dietary announcement card */}
+              <div className="hidden lg:block bg-stone-100 border border-stone-250 p-5 rounded-2xl text-xs space-y-2.5">
+                <h5 className="font-bold text-stone-900 flex items-center space-x-1.5">
+                  <span className="inline-block w-4 h-4 border border-emerald-600 flex items-center justify-center p-0.5 bg-white rounded">
+                    <span className="w-2 h-2 bg-emerald-600 rounded-full"></span>
+                  </span>
+                  <span>100% Pure Vegetarian Policy</span>
+                </h5>
+                <p className="text-stone-600 leading-relaxed">
+                  We maintain zero tolerance for non-vegetarian products in our warehouse, kitchen, storage, and utensils. All ingredients are carefully audited for your peace of mind.
+                </p>
+              </div>
+            </div>
 
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-start pt-1">
-                            <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-emerald-900 transition-colors">
-                              {item.name}
-                            </h3>
-                          </div>
+            {/* Menu Items List */}
+            <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-1 gap-6">
+              
+              {/* Active Category Item Card List */}
+              <div className="space-y-4">
+                {MENU_DATA[activeCategory].items.map((item) => {
+                  const isCurrentlySelected = selectedItem?.id === item.id;
+                  return (
+                    <div 
+                      key={item.id}
+                      onClick={() => setSelectedItem(item)}
+                      className={`group p-5 bg-white rounded-2xl border transition-all cursor-pointer relative hover:shadow-md ${
+                        isCurrentlySelected 
+                          ? "border-amber-500 ring-1 ring-amber-500/50 shadow-md bg-stone-50/10" 
+                          : "border-stone-200 hover:border-stone-350"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="space-y-1.5 flex-1">
                           
-                          <p className="text-xs text-stone-500 leading-relaxed max-w-[90%] font-medium">
+                          {/* Title & Tags */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-block w-3.5 h-3.5 border border-emerald-600 flex items-center justify-center p-0.5 bg-white">
+                              <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full"></span>
+                            </span>
+                            <h4 className="text-base sm:text-lg font-bold text-stone-900 group-hover:text-amber-700 transition-colors">
+                              {item.name}
+                            </h4>
+                            {item.isPopular && (
+                              <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center space-x-0.5">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                <span>Local Favorite</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-xs sm:text-sm text-stone-600 leading-relaxed line-clamp-2 sm:line-clamp-none">
                             {item.description}
                           </p>
 
-                          <div className="flex items-center gap-3 pt-1 text-[11px] text-stone-400 font-semibold uppercase tracking-wider">
-                            <span className="text-amber-700 font-bold flex items-center gap-0.5">
-                              ★ {item.rating}
-                            </span>
-                            <span>•</span>
-                            <span>{item.calories} kCal</span>
-                            <span>•</span>
-                            <span className="text-emerald-800 lowercase">veg</span>
+                          {/* Chips tags */}
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {item.tags?.map((tag, tIdx) => (
+                              <span key={tIdx} className="text-[10px] bg-stone-100 text-stone-600 px-2 py-1 rounded">
+                                {tag}
+                              </span>
+                            ))}
                           </div>
+
                         </div>
 
-                        {/* Card bottom footer detail: Price & Trigger Add button */}
-                        <div className="flex items-center justify-between border-t border-stone-100 pt-4 mt-4">
-                          <span className="font-serif text-xl font-black text-emerald-950">
+                        {/* Price & Selection indicator */}
+                        <div className="text-right flex flex-col justify-between items-end h-full min-w-[70px]">
+                          <span className="text-base sm:text-lg font-extrabold text-stone-900 font-serif">
                             ₹{item.price}
                           </span>
-
-                          <div className="flex items-center gap-2">
-                            {quantity > 0 && (
-                              <>
-                                <button
-                                  onClick={() => removeFromTray(item.id)}
-                                  className="h-8 w-8 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-900 font-bold flex items-center justify-center transition-colors"
-                                  title="Remove 1 item"
-                                >
-                                  <Minus className="w-3.5 h-3.5" />
-                                </button>
-                                <span className="font-mono text-sm font-extrabold text-stone-800 px-1 w-5 text-center">
-                                  {quantity}
-                                </span>
-                              </>
-                            )}
-                            <button
-                              onClick={() => addToTray(item.id, item.name)}
-                              className={`h-8 px-3.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${quantity > 0 ? "bg-emerald-800 hover:bg-emerald-900 text-white" : "bg-[#FAF6F0] hover:bg-emerald-800 hover:text-white text-stone-800 border border-stone-300"}`}
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              <span>{quantity > 0 ? "Add More" : "Add to Tray"}</span>
-                            </button>
-                          </div>
+                          <span className={`text-xs ml-auto mt-4 font-bold flex items-center space-x-1 ${isCurrentlySelected ? "text-amber-700" : "text-stone-300 group-hover:text-stone-500"}`}>
+                            <span>Details</span>
+                            <ChevronRight className="w-3 h-3" />
+                          </span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
 
-                <div className="bg-amber-50 border border-amber-200/70 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-amber-500/10 text-amber-900 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-stone-950 text-sm">Have a Wedding, Feast, or Catered Event?</h4>
-                    <p className="text-stone-600 text-xs mt-0.5">
-                      We offer premium traditional South Indian buffet catering for group parties and weddings in Mysuru. Use the party enquiry card on the right to get a custom quote!
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* TAB: STORY & HERITAGE COMPONENT */}
-            {activeTab === "about" && (
-              <div className="space-y-8">
-                
-                <h3 className="font-serif text-2xl font-bold text-stone-950">
-                  The Taste of Tradition near Ballal Circle
-                </h3>
-                
-                <div className="relative rounded-2xl overflow-hidden bg-stone-900 shadow-xl border border-stone-200">
-                  <img 
-                    src={ambianceImage} 
-                    alt="Authentic Traditional Restaurant Ambiance of Mahesh Prasad" 
-                    className="w-full h-[320px] object-cover"
-                    referrerPolicy="no-referrer"
-                    id="heritage-ambiance-image"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent flex items-end p-6">
-                    <div>
-                      <span className="text-[10px] text-amber-400 font-extrabold uppercase tracking-widest bg-amber-950/60 p-2 rounded">
-                        Established Legacy
-                      </span>
-                      <h4 className="text-xl font-bold font-serif text-white mt-2">Mahesh Prasad Dining Hall</h4>
                     </div>
-                  </div>
-                </div>
-
-                <div className="prose text-stone-600 space-y-4 text-sm leading-relaxed max-w-none">
-                  <p>
-                    Nestled in the vibrant heart of Chamarajapuram, just a stone's throw from the historic Mysuru RTO Office, <strong>Mahesh Prasad Veg Restaurant</strong> stands as a pure dietary heritage landmark. Over the decades, we have remained committed to preservation: authentic spice blends ground daily, pure high-quality locally produced oils and ghee, and original standard South Indian tiffin recipes.
-                  </p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                    <div className="bg-white p-5 rounded-xl border border-stone-200">
-                      <h4 className="font-serif font-bold text-stone-900 text-base mb-1.5">No Artificial Preservatives</h4>
-                      <p className="text-xs text-stone-500">Every single batter, chutney, and sambar is prepared completely fresh on order. We do not use stored preservatives, chemicals, or artificial taste boosters like MSG.</p>
-                    </div>
-                    <div className="bg-white p-5 rounded-xl border border-stone-200">
-                      <h4 className="font-serif font-bold text-stone-900 text-base mb-1.5 font-medium">Desi Butter & Ghee Only</h4>
-                      <p className="text-xs text-stone-500">Our signature crispy dosa is prepared with fresh local pasture-reared cow butter, bringing back that nostalgic native heritage flavor.</p>
-                    </div>
-                  </div>
-
-                  <p>
-                    Whether you are a regular local guide starting your Friday morning with a filter coffee, or a traveler discovering the beauty of Mysuru, Mahesh Prasad welcomes you for a hearty breakfast or an authentic family lunch feast!
-                  </p>
-                </div>
-
-              </div>
-            )}
-
-            {/* TAB: REVIEWS SHOWCASE COMPONENT */}
-            {activeTab === "reviews" && (
-              <div className="space-y-8">
-                
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-5">
-                  <div>
-                    <h3 className="font-serif text-2xl font-bold text-stone-950">
-                      What Patrons Say
-                    </h3>
-                    <p className="text-stone-500 text-xs mt-0.5">
-                      Aggregated total of 3,914 Google Reviews with a 4.1 overall rating.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xl font-black text-stone-900 leading-none">4.1</span>
-                    <div className="text-stone-500 text-[11px] leading-tight font-semibold">
-                      <div className="flex text-amber-500">
-                        <Star className="w-3.5 h-3.5 fill-amber-500" />
-                        <Star className="w-3.5 h-3.5 fill-amber-500" />
-                        <Star className="w-3.5 h-3.5 fill-amber-500" />
-                        <Star className="w-3.5 h-3.5 fill-amber-500" />
-                        <Star className="w-3.5 h-3.5/2 fill-current opacity-30" />
-                      </div>
-                      <span>3,914 Verified Google Reviews</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Submit New Review Form Block */}
-                <div className="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-xs space-y-4">
-                  <h4 className="font-serif font-bold text-stone-900 text-sm flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-emerald-800" />
-                    <span>Leave a Community Review</span>
-                  </h4>
-
-                  <form onSubmit={handleReviewSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">
-                          Your Name
-                        </label>
-                        <input 
-                          type="text" 
-                          value={newAuthor}
-                          onChange={(e) => setNewAuthor(e.target.value)}
-                          placeholder="Example: Anand Rao"
-                          required
-                          className="w-full bg-[#FAF6F0] rounded-xl border border-stone-300 p-3 text-xs font-bold outline-emerald-800 transition-all"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">
-                          Star Rating
-                        </label>
-                        <select 
-                          value={newRating}
-                          onChange={(e) => setNewRating(Number(e.target.value))}
-                          className="w-full bg-[#FAF6F0] rounded-xl border border-stone-300 p-3 text-xs font-bold outline-emerald-800 transition-all appearance-none"
-                        >
-                          <option value="5">⭐⭐⭐⭐⭐ Excellent (5 Stars)</option>
-                          <option value="4">⭐⭐⭐⭐ Healthy & Tasty (4 Stars)</option>
-                          <option value="3">⭐⭐⭐ Good Average (3 Stars)</option>
-                          <option value="2">⭐⭐ Subpar (2 Stars)</option>
-                          <option value="1">⭐ Bad (1 Star)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1.5">
-                        Your Feedback Comment
-                      </label>
-                      <textarea 
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Share your authentic dining experience at Mahesh Prasad..."
-                        rows={3}
-                        required
-                        className="w-full bg-[#FAF6F0] rounded-xl border border-stone-300 p-3 text-xs font-medium outline-emerald-800 transition-all"
-                      ></textarea>
-                    </div>
-
-                    <button 
-                      type="submit"
-                      className="bg-emerald-800 hover:bg-emerald-950 text-white rounded-xl px-5 py-3 text-xs font-bold transition-all inline-flex items-center gap-2"
-                      id="submit-review-form-btn"
-                    >
-                      <ThumbsUp className="w-3.5 h-3.5" />
-                      <span>Post Anonymous Review</span>
-                    </button>
-                    
-                    {reviewSubmitted && (
-                      <p className="text-xs text-emerald-800 font-extrabold flex items-center gap-1 mt-2">
-                        <Check className="w-4 h-4 text-emerald-800" />
-                        <span>Review posted successfully in your active browser deck!</span>
-                      </p>
-                    )}
-                  </form>
-                </div>
-
-                {/* List of Reviews */}
-                <div className="space-y-4">
-                  {reviews.map((rev) => (
-                    <div 
-                      key={rev.id} 
-                      className="bg-white p-5 rounded-2xl border border-stone-200/80 shadow-xs space-y-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-serif font-black text-stone-900 text-sm">{rev.author}</span>
-                          {rev.isLocalGuide && (
-                            <span className="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[9px] font-extrabold tracking-wider uppercase select-none">
-                              Local Guide
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-stone-400 text-[10px] font-semibold">{rev.date}</span>
-                      </div>
-
-                      <div className="flex text-amber-500">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`w-3.5 h-3.5 ${i < rev.rating ? "fill-amber-500 text-amber-500" : "text-stone-200 fill-none"}`} 
-                          />
-                        ))}
-                      </div>
-
-                      <p className="text-xs text-stone-600 leading-relaxed font-medium">
-                        {rev.comment}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-              </div>
-            )}
-
-          </div>
-
-          {/* Tab Content - Right Side (Enquiry & Order Checker Sticky) */}
-          <div className="lg:col-span-4 space-y-8">
-            
-            {/* STICKY COMPONENT: CUSTOM FEAST TRAY ESTIMATOR */}
-            <div className="bg-white rounded-2xl p-6 border border-stone-200/80 shadow-md space-y-6 sticky top-28">
-              
-              <div className="flex items-center justify-between border-b border-stone-200 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-800 flex items-center justify-center font-bold">
-                    <Utensils className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif text-base font-bold text-stone-950">My Feast Tray</h3>
-                    <p className="text-[10px] text-stone-500 font-medium">Select meals to preview plate cost</p>
-                  </div>
-                </div>
-                {trayItems.length > 0 && (
-                  <button 
-                    onClick={clearTray}
-                    className="text-[10px] uppercase tracking-wider font-extrabold text-stone-400 hover:text-stone-950 transition-colors"
-                  >
-                    Clear All
-                  </button>
-                )}
+                  );
+                })}
               </div>
 
-              {trayItems.length === 0 ? (
-                <div className="text-center py-6 space-y-3">
-                  <div className="h-12 w-12 rounded-full bg-stone-100 flex items-center justify-center mx-auto text-stone-400">
-                    <Utensils className="w-6 h-6 animate-pulse" />
+              {/* Mobile Selected Item Detailed Spotlight (or interactive visual placeholder) */}
+              {selectedItem && (
+                <div id="recipe-spotlight" className="bg-gradient-to-r from-amber-50 to-stone-100 border border-amber-500/20 rounded-2xl p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-800 tracking-widest uppercase flex items-center space-x-1">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Dish Spotlight</span>
+                    </span>
+                    <span className="text-stone-500 text-xs font-mono">Mahesh Prasad Special</span>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-bold text-stone-700">Your Feast Tray is Empty</p>
-                    <p className="text-[11px] text-stone-500 leading-relaxed">
-                      Tap <strong className="text-emerald-800 font-bold">+ Ghee Tray</strong> on any dish inside the menu to calculate prices, calories, and preview a traditional lunch order.
-                    </p>
+                  <div className="space-y-2">
+                    <h5 className="text-xl font-serif font-extrabold text-stone-900">{selectedItem.name}</h5>
+                    <p className="text-sm text-stone-700 leading-relaxed">{selectedItem.description}</p>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Tray Items List */}
-                  <div className="divide-y divide-stone-100 max-h-48 overflow-y-auto pr-1">
-                    {trayItems.map((item) => (
-                      <div key={item.dish.id} className="py-2.5 flex justify-between items-center text-xs">
-                        <div className="space-y-0.5">
-                          <p className="font-medium text-stone-900 font-serif font-bold">{item.dish.name}</p>
-                          <p className="text-[10px] text-stone-400 font-semibold">{item.dish.calories} kcal each</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-stone-400 font-medium">x{item.quantity}</span>
-                          <span className="font-bold text-stone-900 w-12 text-right">₹{item.dish.price * item.quantity}</span>
-                          <button
-                            onClick={() => removeFromTray(item.dish.id)}
-                            className="text-stone-300 hover:text-orange-600 transition-colors pl-1"
-                            title="Remove completely"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Pricing and Calorie Totalizer */}
-                  <div className="bg-[#FAF6F0] p-4 rounded-xl border border-stone-200/80 space-y-2 text-xs">
-                    <div className="flex justify-between items-center text-stone-500 font-medium">
-                      <span>Total Nutrients (Estimate):</span>
-                      <span className="font-mono">{totalCalories} kCal</span>
+                  <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-stone-200">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-stone-500">Premium quality and taste guaranteed • Pure Ghee</span>
                     </div>
-                    <div className="flex justify-between items-center text-stone-900 font-bold text-sm pt-1 border-t border-stone-200/50">
-                      <span>Grand Total:</span>
-                      <span className="font-serif text-emerald-950 font-black text-base">₹{totalPrice}</span>
-                    </div>
+                    <span className="text-lg font-black text-stone-955">₹{selectedItem.price} (Inclusive of Taxes)</span>
                   </div>
-
-                  {/* Simulated Dine-in Plate Call to Action */}
-                  <button 
-                    onClick={() => triggerNotification(`Order Estimated! Dine-In with us at Ballal Circle to get these piping hot.`)}
-                    className="w-full bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl py-3.5 text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
-                    id="feast-dine-estimate-cta"
-                  >
-                    <span>Dine-In Estimate Plate</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               )}
 
-              {/* Group Reservation Catering Enquiry Quick Form */}
-              <div className="border-t border-stone-200 pt-6 space-y-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-amber-700" />
-                  <h4 className="font-serif text-sm font-bold text-stone-900">Group Dining / Catering Inquiry</h4>
+            </div>
+
+          </div>
+
+        </section>
+
+        {/* Brand Vibe / Heritage Highlights */}
+        <section id="heritage" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          
+          <div className="lg:col-span-6 relative rounded-3xl overflow-hidden shadow-xl aspect-16/10 lg:aspect-square">
+            <img 
+              src={vibeImage} 
+              alt="Warm hospitality, clean wooden tables, and bright light at Mahesh Prasad Veg Restaurant" 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+            {/* Soft gold glow overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent"></div>
+            
+            {/* Quick tag floating */}
+            <div className="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur-md p-4 rounded-2xl flex items-center justify-between">
+              <div>
+                <h5 className="font-serif font-bold text-stone-900">Iconic Heritage Inside</h5>
+                <p className="text-xs text-amber-800">Near RTO Office, Chamarajapura, Mysuru</p>
+              </div>
+              <div className="bg-amber-600 text-white rounded-full p-2">
+                <Compass className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 space-y-6">
+            <span className="text-amber-700 font-bold uppercase text-xs tracking-widest block">The Heart of Mysuru Food</span>
+            <h3 className="text-3xl sm:text-4xl font-serif font-black tracking-tight text-stone-950">
+              Where Generous Recipes Meet Decades of Legacy
+            </h3>
+            
+            <p className="text-stone-600 leading-relaxed text-sm sm:text-base">
+              At Mahesh Prasad Veg Restaurant, we stand as keepers of local food traditions. Our master chefs prepare breakfast, lunch meals, and our famous evening filter coffee with recipes passed down through generations. 
+            </p>
+
+            <div className="space-y-4">
+              
+              <div className="flex items-start space-x-3.5">
+                <div className="w-6 h-6 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-3.5 h-3.5 text-amber-700" />
                 </div>
-                
-                <form onSubmit={handleEnquirySubmit} className="space-y-3">
+                <div>
+                  <h4 className="font-bold text-stone-900 text-sm sm:text-base">Handpicked Local Ingredients</h4>
+                  <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+                    Sourcing directly from local farmers in Mysore district ensuring absolute crisp freshness and supreme flavor.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-3.5">
+                <div className="w-6 h-6 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-3.5 h-3.5 text-amber-700" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-stone-900 text-sm sm:text-base">Melt-In-Your-Mouth Quality</h4>
+                  <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+                    The famous crispy golden texture of our Dosas comes from a carefully fermented black lentil rice batter recipe, ground daily on ancient stone-grinders.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-3.5">
+                <div className="w-6 h-6 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-3.5 h-3.5 text-amber-700" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-stone-900 text-sm sm:text-base">Fast & Warm Indian Dining Experience</h4>
+                  <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+                    Enjoy fast service from our legendary, smiling team members who serve every single cup of coffee scalding hot and piping fresh.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="pt-4 flex items-center space-x-4">
+              <div className="border-l-4 border-amber-500 pl-4 py-1">
+                <p className="italic text-stone-600 text-sm">
+                  &quot;The quintessential Mysuru breakfast experience! Excellent flavor, superb value, and iconic coffee in every serve.&quot;
+                </p>
+                <span className="text-xs font-bold block mt-1.5 text-stone-900">— 4.1 rated user citation on search</span>
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+        {/* Interactive Reviews & Customer Feedbacks */}
+        <section id="reviews" className="bg-stone-50 border border-stone-200 rounded-3xl p-6 sm:p-10 space-y-10">
+          
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-stone-200 pb-8">
+            <div className="space-y-2">
+              <span className="text-amber-700 font-bold uppercase text-xs tracking-widest block">Customer Testimonials</span>
+              <h3 className="text-3xl font-serif font-black tracking-tight text-stone-950">
+                What 3,914 Diners Are Saying
+              </h3>
+              <p className="text-stone-650 text-sm max-w-xl">
+                We pride ourselves on culinary consistency. Read honest testimonials from genuine food lovers, or share your own personal experience below.
+              </p>
+            </div>
+            
+            {/* Quick rating summaries card */}
+            <div className="bg-white px-5 py-4 rounded-2xl border border-stone-200 shadow-sm flex items-center space-x-4 self-stretch md:self-auto justify-center">
+              <div className="text-center">
+                <span className="block text-3xl font-serif font-extrabold text-stone-900">4.1</span>
+                <span className="text-[10px] text-stone-500 uppercase tracking-wider font-bold">out of 5 stars</span>
+              </div>
+              <div className="h-10 w-px bg-stone-200"></div>
+              <div>
+                <div className="flex text-amber-400">
+                  {[1, 2, 3, 4].map((star) => (
+                    <Star key={star} className="w-4 h-4 fill-amber-400" />
+                  ))}
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-500 opacity-60" />
+                </div>
+                <p className="text-xs text-stone-600 font-semibold mt-1">3,914 Verified reviews</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Testimonial Feed Grids */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Review List Left */}
+            <div className="lg:col-span-7 space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-2">Diners Feedback</h4>
+              
+              <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin pr-1">
+                {reviews.map((rev) => (
+                  <div key={rev.id} className="bg-white p-5 rounded-2xl border border-stone-150 shadow-sm space-y-3.5 transition-all hover:border-stone-300">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h5 className="font-bold text-stone-900 text-sm sm:text-base">{rev.author}</h5>
+                        <span className="text-stone-400 text-xs">{rev.date}</span>
+                      </div>
+                      <div className="flex items-center space-x-1.5">
+                        <div className="flex text-amber-400">
+                          {Array.from({ length: rev.rating }).map((_, i) => (
+                            <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                          ))}
+                        </div>
+                        <span className="text-xs font-bold text-stone-800">{rev.rating}.0</span>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-stone-650 leading-relaxed italic">
+                      &quot;{rev.comment}&quot;
+                    </p>
+
+                    {/* Social feedback buttons */}
+                    <div className="flex items-center justify-between pt-1 text-xs text-stone-500">
+                      <button 
+                        onClick={() => handleLikeReview(rev.id)}
+                        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-colors ${rev.isLiked ? "bg-amber-50 text-amber-700 font-bold" : "hover:bg-stone-100"}`}
+                      >
+                        <ThumbsUp className={`w-3.5 h-3.5 ${rev.isLiked ? "fill-amber-600 text-amber-700" : ""}`} />
+                        <span>{rev.likes} Helpful</span>
+                      </button>
+                      <span className="text-[10px] text-stone-400 bg-stone-50 px-2 py-1 rounded">Verified Visitor</span>
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Leave a Review Form Right */}
+            <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-stone-200/80 shadow-md space-y-6">
+              
+              <div className="space-y-1.5">
+                <h4 className="text-lg font-serif font-bold text-stone-900">Share Your Experience</h4>
+                <p className="text-xs text-stone-500">Have you visited Mahesh Prasad? Tell other travelers what you enjoyed most!</p>
+              </div>
+
+              {submittedReview ? (
+                <div className="bg-emerald-55 bg-emerald-50 border border-emerald-250 p-6 rounded-xl flex flex-col items-center justify-center text-center space-y-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <Check className="w-5 h-5 text-emerald-700" />
+                  </div>
+                  <h5 className="font-bold text-emerald-900">Review Submitted Successfully!</h5>
+                  <p className="text-xs text-emerald-700">Thank you for rating Mahesh Prasad Veg Restaurant. Your feedback keeps our traditional standards pristine!</p>
+                </div>
+              ) : (
+                <form onSubmit={handleAddReview} className="space-y-4">
+                  
                   <div>
+                    <label htmlFor="reviewer-name" className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Your Name</label>
                     <input 
+                      id="reviewer-name"
                       type="text" 
-                      value={guestName}
-                      onChange={(e) => setGuestName(e.target.value)}
-                      placeholder="Contact Name"
+                      placeholder="e.g. Anand Kumar" 
+                      value={newAuthor}
+                      onChange={(e) => setNewAuthor(e.target.value)}
                       required
-                      className="w-full bg-[#FAF6F0] rounded-lg border border-stone-300 p-2 text-xs font-semibold outline-emerald-800"
+                      className="w-full bg-stone-50 border border-stone-200 text-stone-850 px-3.5 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500 focus:bg-white transition-all"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <input 
-                      type="tel" 
-                      value={guestPhone}
-                      onChange={(e) => setGuestPhone(e.target.value)}
-                      placeholder="Phone Number"
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">Your Rating</label>
+                    <div className="flex items-center space-x-1.5">
+                      {[1, 2, 3, 4, 5].map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setNewRating(val)}
+                          className="p-1 rounded hover:bg-stone-100 transition-colors focus:ring-1 focus:ring-amber-400"
+                          title={`${val} Stars`}
+                        >
+                          <Star className={`w-7 h-7 transition-colors ${val <= newRating ? "fill-amber-400 text-amber-500" : "text-stone-300"}`} />
+                        </button>
+                      ))}
+                      <span className="text-sm font-bold text-stone-700 ml-2">{newRating} out of 5</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="reviewer-comment" className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Your Honest Review Comment</label>
+                    <textarea 
+                      id="reviewer-comment"
+                      rows={3}
+                      placeholder="Describe what you ate (e.g., Dosa, Coffee) and your service experience..." 
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
                       required
-                      className="w-full bg-[#FAF6F0] rounded-lg border border-stone-300 p-2 text-xs font-semibold outline-emerald-800"
+                      className="w-full bg-stone-50 border border-stone-200 text-stone-850 px-3.5 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500 focus:bg-white transition-all resize-none"
                     />
-                    
-                    <select
-                      value={guestCount}
-                      onChange={(e) => setGuestCount(e.target.value)}
-                      className="w-full bg-[#FAF6F0] rounded-lg border border-stone-300 p-2 text-xs font-semibold outline-emerald-800 appearance-none"
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="w-full bg-stone-900 hover:bg-stone-850 text-white text-sm font-bold py-3.5 rounded-xl transition-all hover:scale-101 active:scale-99 shadow-md flex items-center justify-center space-x-2"
+                  >
+                    <MessageSquare className="w-4 h-4 text-amber-400" />
+                    <span>Submit Review Feedback</span>
+                  </button>
+
+                </form>
+              )}
+
+            </div>
+
+          </div>
+
+        </section>
+
+        {/* Dynamic Table Reservation / Event Inquiry Form */}
+        <section id="reservation" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch scroll-mt-24">
+          
+          {/* Reservation Card Details - Left */}
+          <div className="lg:col-span-5 bg-stone-900 text-white rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-8">
+            <div className="space-y-4">
+              <span className="text-amber-400 font-bold uppercase text-xs tracking-widest block">Group Dinners & Catering</span>
+              <h3 className="text-3xl font-serif font-black tracking-tight leading-tight">
+                Planning a Family Gatherting or Event?
+              </h3>
+              <p className="text-sm text-stone-300 leading-relaxed">
+                While we operate primarily on an open walk-in policy, we happily arrange table couplings for large groups of 6+ or cater traditional Mysuru feasts for custom events, family rituals, and business meetings.
+              </p>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-stone-800">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-stone-400">Why Pre-Register with us?</h4>
+              
+              <ul className="space-y-3.5 text-sm font-medium">
+                <li className="flex items-center space-x-2.5 text-stone-200">
+                  <span className="w-5 h-5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center">✓</span>
+                  <span>Zero Queue Waiting Time</span>
+                </li>
+                <li className="flex items-center space-x-2.5 text-stone-200">
+                  <span className="w-5 h-5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center">✓</span>
+                  <span>Dedicated table servers</span>
+                </li>
+                <li className="flex items-center space-x-2.5 text-stone-200">
+                  <span className="w-5 h-5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center">✓</span>
+                  <span>Customizable food menu items</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs text-stone-400">Need instant custom catering quote? Call:</p>
+              <a href="tel:08212330820" className="text-lg font-bold text-amber-400 hover:underline flex items-center space-x-1.5">
+                <Phone className="w-4 h-4 inline" />
+                <span>0821 233 0820</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Interactive Booking Form - Right */}
+          <div className="lg:col-span-7 bg-white border border-stone-200 rounded-3xl p-6 sm:p-8 shadow-lg flex flex-col justify-between">
+            <div className="space-y-2 mb-4">
+              <h4 className="text-xl font-serif font-black text-stone-900">Request Group Table / Event Space</h4>
+              <p className="text-xs text-stone-500">Provide details below. Our reservation manager will call back to confirm your booking within 15 minutes.</p>
+            </div>
+
+            {bookingSubmitted ? (
+              <div className="flex-1 bg-amber-50/50 border border-amber-200 p-8 rounded-2xl flex flex-col items-center justify-center text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-amber-150 bg-amber-100 flex items-center justify-center">
+                  <ClipboardCheck className="w-8 h-8 text-amber-700" />
+                </div>
+                <div>
+                  <h5 className="font-serif font-black text-stone-900 text-lg">Inquiry Successfully Registered!</h5>
+                  <p className="text-sm text-stone-700 max-w-md mt-1 leading-relaxed">
+                    Thank you <span className="font-bold">{bookingName}</span>! We have received your request for <span className="font-bold">{bookingGuestCount} guests</span> on <span className="font-bold">{bookingDate}</span>. Our dining executive will call your mobile number <span className="font-semibold text-amber-800">{bookingPhone}</span> within 10–15 minutes.
+                  </p>
+                </div>
+                <div className="w-full text-xs text-stone-500">
+                  Your prompt booking details are tracked securely under local browser safety.
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleBookingConfirm} className="space-y-4">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="booking-name" className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Your Full Name</label>
+                    <input 
+                      id="booking-name"
+                      type="text" 
+                      placeholder="e.g. Ramesh Hegde" 
+                      value={bookingName}
+                      onChange={(e) => setBookingName(e.target.value)}
+                      required
+                      className="w-full bg-stone-50 border border-stone-200 text-stone-850 px-3.5 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="booking-phone" className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Mobile Contact Phone</label>
+                    <input 
+                      id="booking-phone"
+                      type="tel" 
+                      placeholder="e.g. 09845X XXXXX" 
+                      value={bookingPhone}
+                      onChange={(e) => setBookingPhone(e.target.value)}
+                      required
+                      className="w-full bg-stone-50 border border-stone-200 text-stone-850 px-3.5 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500 focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="booking-guests" className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">No. of Guests</label>
+                    <select 
+                      id="booking-guests"
+                      value={bookingGuestCount}
+                      onChange={(e) => setBookingGuestCount(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-200 text-stone-850 px-3 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500 focus:bg-white transition-all"
                     >
-                      <option value="10">10-25 Guests</option>
-                      <option value="50">25-50 Guests</option>
-                      <option value="100">50-100 Guests</option>
-                      <option value="200">100+ Guests (Wedding)</option>
+                      <option value="2">2 - Small Table</option>
+                      <option value="4">4 - Standard Table</option>
+                      <option value="6">6 - Coupling Table</option>
+                      <option value="8">8 - Large Family Bench</option>
+                      <option value="12">12+ - Party Hall Suite</option>
                     </select>
                   </div>
 
                   <div>
+                    <label htmlFor="booking-date" className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Preferred Date</label>
                     <input 
-                      type="date"
-                      value={enquiryDate}
-                      onChange={(e) => setEnquiryDate(e.target.value)}
+                      id="booking-date"
+                      type="date" 
+                      value={bookingDate}
+                      onChange={(e) => setBookingDate(e.target.value)}
                       required
-                      className="w-full bg-[#FAF6F0] rounded-lg border border-stone-300 p-2 text-xs font-semibold outline-emerald-800 font-mono"
+                      className="w-full bg-stone-50 border border-stone-200 text-stone-850 px-3 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500/60 focus:bg-white transition-all"
                     />
                   </div>
 
-                  <button 
-                    type="submit"
-                    className="w-full bg-stone-900 hover:bg-stone-800 text-white rounded-lg py-2.5 text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
-                    id="submit-catering-lead-btn"
-                  >
-                    <span>Request Catering Booklet</span>
-                  </button>
-
-                  {enquirySuccess && (
-                    <p className="text-[10px] text-center text-emerald-800 font-black flex items-center justify-center gap-1 mt-1 bg-emerald-50 py-1.5 rounded-lg border border-emerald-100">
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Thank you! We will text you custom menus.</span>
-                    </p>
-                  )}
-                </form>
-              </div>
-
-              {/* Direct Call Quick Link Card */}
-              <div className="bg-stone-50 border border-stone-200/80 px-4 py-3 rounded-xl flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-emerald-800 animate-pulse" />
                   <div>
-                    <p className="font-semibold text-stone-500">Need immediate help?</p>
-                    <p className="font-bold text-stone-900">0821 233 0820</p>
+                    <label htmlFor="booking-time" className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">Preferred Time</label>
+                    <input 
+                      id="booking-time"
+                      type="time" 
+                      value={bookingTime}
+                      onChange={(e) => setBookingTime(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-200 text-stone-850 px-3 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500/60 focus:bg-white transition-all"
+                    />
                   </div>
                 </div>
-                <a 
-                  href="tel:08212330820"
-                  className="bg-emerald-50 text-emerald-800 font-bold hover:bg-emerald-800 hover:text-white px-3 py-1.5 rounded-lg transition-all"
-                >
-                  Dial Now
-                </a>
-              </div>
 
-            </div>
+                <div className="bg-stone-50 p-4 rounded-xl border border-stone-200 text-xs text-stone-600 leading-relaxed">
+                  <strong>Important Dining Note:</strong> Walk-in queues remain fully functional. Registered banquet space inquiries or high-volume table coupons will request a final call verification to ensure flawless table prep before arrival.
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold py-4 rounded-xl shadow-lg transition-all hover:scale-101 hover:shadow-xl flex items-center justify-center space-x-2"
+                >
+                  <Check className="w-5 h-5 text-white" />
+                  <span>Submit Table Pre-Registration</span>
+                </button>
+
+              </form>
+            )}
 
           </div>
 
-        </div>
+        </section>
 
       </main>
 
-      {/* Structured Google Maps Interactive Callout / High Contrast Grid */}
-      <section className="bg-[#EFEAE2] border-t border-stone-300/60 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      {/* Comprehensive Maps Area & Visual Location Footer Segment */}
+      <section id="full-map" className="aspect-21/9 relative min-h-[350px] bg-stone-200 flex items-center justify-center overflow-hidden border-t border-b border-stone-300">
+        
+        {/* Mock static maps render utilizing professional satellite outlines or a clean, stylized route layout */}
+        <div className="absolute inset-0 z-0 bg-stone-100 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] flex items-center justify-center text-center">
           
-          <div className="lg:col-span-6 space-y-6">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#FAF6F0] bg-emerald-800/80 px-3.5 py-1.5 rounded-full shadow-xs w-fit">
-              Location & Accessibility
-            </span>
-
-            <h2 className="font-serif text-3xl font-extrabold tracking-tight text-stone-950">
-              Visit Us Near Ballal Circle & the RTO Office
-            </h2>
-
-            <p className="text-stone-600 text-sm leading-relaxed max-w-xl">
-              Our restaurant features accessible ground-floor seating, ample two-wheeler parking, and rapid service. Located at the bustling junction of Lakshmipuram & Chamarajapuram—making it an ideal stop for tourists exploring Mysore and locals alike.
-            </p>
-
-            {/* List coordinates & landmarks */}
-            <div className="space-y-3.5">
-              <div className="flex items-start gap-3 text-xs">
-                <MapPin className="w-5 h-5 text-emerald-800 mt-0.5 shrink-0" />
-                <div>
-                  <h4 className="font-bold text-stone-900 uppercase tracking-wide">Official Address</h4>
-                  <p className="text-stone-500 font-medium leading-relaxed mt-0.5">
-                    Ballal Cir, near RTO Office, Chamarajapura, Chamarajapuram Mohalla, Lakshmipuram, Mysuru, Karnataka 570005
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 text-xs">
-                <Phone className="w-5 h-5 text-emerald-800 mt-0.5 shrink-0" />
-                <div>
-                  <h4 className="font-bold text-stone-900 uppercase tracking-wide">Telephone Inquiries</h4>
-                  <p className="text-stone-500 font-medium mt-0.5">
-                    0821 233 0820 (Standard carrier rates apply)
-                  </p>
-                </div>
-              </div>
+          <div className="max-w-md mx-auto space-y-4 px-6 z-10">
+            <div className="w-12 h-12 rounded-full bg-amber-600 text-white flex items-center justify-center mx-auto shadow-lg">
+              <Map className="w-6 h-6" />
+            </div>
+            
+            <div className="space-y-1">
+              <h4 className="text-xl font-serif font-black text-stone-900">Map & Satellite Guidance</h4>
+              <p className="text-xs text-stone-500 leading-relaxed px-4">
+                Located near Ballal Circle, right next to the RTO Office in the beautiful surroundings of Lakshmipuram/Chamarajapuram, Mysuru, Karnataka 570005.
+              </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="pt-2">
               <a 
                 href="https://www.google.com/maps/search/?api=1&query_place_id=ChIJ776TqABwrzsRJlFuzZSXo-I&query=Mahesh%20Prasad%20Veg%20Restaurant" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl py-3 px-6 text-xs font-bold transition-all shadow-md inline-flex items-center gap-1.5"
-                id="maps-direction-launcher-cta-bottom"
+                className="inline-flex items-center space-x-2 bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-md transition-all hover:scale-105"
               >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>Open Google Maps</span>
+                <span>Navigate on Google Maps App</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </a>
-              <button 
-                onClick={copyAddress}
-                className="bg-white hover:bg-stone-100 border border-stone-300 text-stone-950 rounded-xl py-3 px-5 text-xs font-bold transition-all inline-flex items-center gap-1.5"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy to Share</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6">
-            {/* Visual static map representation indicating the location meticulously */}
-            <div className="bg-white p-4 rounded-2xl border border-stone-350 shadow-md space-y-4">
-              <div className="h-64 rounded-xl bg-stone-100 relative overflow-hidden border border-stone-200">
-                
-                {/* Visual grid representing streets of Mysuru */}
-                <div className="absolute inset-0 bg-[#E8DCC4]/20 p-4 flex flex-col justify-between border border-stone-200" style={{ backgroundImage: "radial-gradient(#D6C4A3 1px, transparent 1px)", backgroundSize: "16px 16px" }}>
-                  
-                  {/* Street Labels Mock Representation */}
-                  <div className="text-[10px] text-stone-400 font-extrabold uppercase tracking-wider absolute top-4 left-4 rotate-6 select-none bg-[#FAF6F0]/60 px-1 rounded">
-                    RTO Office Road
-                  </div>
-                  
-                  <div className="text-[10px] text-stone-400 font-extrabold uppercase tracking-wider absolute bottom-12 right-12 -rotate-12 select-none bg-[#FAF6F0]/60 px-1 rounded">
-                    Ballal Circle Junction
-                  </div>
-
-                  {/* Main Marker in middle represent location */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                    <span className="flex h-6 w-6 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-6 w-6 bg-red-600 border-2 border-white items-center justify-center font-bold text-[9px] text-white">MP</span>
-                    </span>
-                    <div className="bg-stone-900 text-[#FAF6F0] p-2.5 rounded-lg shadow-xl text-center mt-2 border border-white/20 select-none max-w-xs shrink-0 whitespace-nowrap">
-                      <p className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Mahesh Prasad Veg</p>
-                      <p className="text-[8px] opacity-80 mt-0.5">Ballal Cir, Mysuru 570005</p>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-stone-500 font-bold border-t border-stone-100 pt-3">
-                <div className="flex items-center gap-1 text-emerald-800">
-                  <Leaf className="w-3.5 h-3.5" />
-                  <span>100% Traditional South Indian</span>
-                </div>
-                <span>★ 4.1 Rating</span>
-              </div>
             </div>
           </div>
 
         </div>
+
+        {/* Floating cards */}
+        <div id="quick-address" className="hidden lg:block absolute bottom-8 left-12 bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-xl max-w-sm border border-stone-200 z-10 space-y-3">
+          <h5 className="font-serif font-extrabold text-stone-900 text-sm">Mahesh Prasad landmarks</h5>
+          <p className="text-xs text-stone-600 leading-relaxed">
+            Beautifully nestled in Chamarajapuram Mohalla, adjacent to Ballal Circle, Mysore. Extremely close to RTO Office. Dedicated private parking for two-wheelers and parking arrangements for tourist cars.
+          </p>
+          <div className="flex text-amber-500 text-xs font-bold space-x-2">
+            <span>✓ Dine-in</span>
+            <span>• Takeaway</span>
+            <span>• catering</span>
+          </div>
+        </div>
+
       </section>
 
-      {/* Footer & Royal Mysuru Credit Elements */}
-      <footer className="bg-stone-950 text-stone-400 border-t border-stone-900 py-12 px-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+      {/* Footer Area */}
+      <footer id="main-footer" className="bg-stone-950 text-stone-400 py-16 px-4 border-t border-stone-900">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
           
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-emerald-800 text-white flex items-center justify-center font-serif text-sm font-black">
-                MP
+          {/* Logo Brand Right Column */}
+          <div className="md:col-span-5 space-y-4">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 border border-emerald-600 flex items-center justify-center p-0.5 bg-white rounded-md">
+                <div className="w-4 h-4 bg-emerald-600 rounded-full"></div>
               </div>
-              <h2 className="font-serif text-base font-bold text-white tracking-wide">
-                Mahesh Prasad Restaurant
-              </h2>
+              <span className="text-lg font-serif font-black text-white tracking-wide">Mahesh Prasad Veg Restaurant</span>
             </div>
-            <p className="text-xs text-stone-400 leading-relaxed max-w-xs">
-              Providing nutritious, fully traditional, pure vegetarian food to our regular patrons and tourists in Mysuru since decades.
+            
+            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed max-w-sm">
+              Mysuru’s cherished culinary treasure, serving delicious pure vegetarian South Indian meals, fluffy idlis, crispy dosas, and heritage filter coffee under uncompromised traditional hygiene standards.
+            </p>
+
+            <p className="text-xs text-stone-500">
+              Copyright © {new Date().getFullYear()} Mahesh Prasad Veg Restaurant, Mysuru. All architectural rights reserved.
             </p>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-xs font-extrabold uppercase tracking-widest text-[#FAF6F0]">Operational Framework</h4>
-            <ul className="space-y-2 text-xs">
-              <li className="flex justify-between">
-                <span>Breakfast Session</span>
-                <span className="font-semibold text-white">7:00 AM - 11:30 AM</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Lunch Session</span>
-                <span className="font-semibold text-white">12:00 PM - 3:30 PM</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Dinner / Tiffins</span>
-                <span className="font-semibold text-white">4:00 PM - 10:30 PM</span>
-              </li>
+          {/* Quick links Center */}
+          <div className="md:col-span-3 space-y-4">
+            <h5 className="text-white font-bold text-xs uppercase tracking-widest">Dine-In Information</h5>
+            <ul className="space-y-2 text-xs sm:text-sm">
+              <li><a href="#menu" className="hover:text-amber-400 transition-colors">Culinary Dosa Menu</a></li>
+              <li><a href="#reviews" className="hover:text-amber-400 transition-colors">3,900+ Google Reviews</a></li>
+              <li><a href="#heritage" className="hover:text-amber-400 transition-colors">Our Karnataka Heritage</a></li>
+              <li><a href="#reservation" className="hover:text-amber-400 transition-colors">Banquet & Group Tables</a></li>
             </ul>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-xs font-extrabold uppercase tracking-widest text-[#FAF6F0]">Contact Points</h4>
-            <ul className="space-y-1.5 text-xs">
-              <li className="text-white">📞 Phone: 0821 233 0820</li>
-              <li>📍 Ballal Cir, near RTO Office, Mysuru, Karnataka 570005</li>
-              <li>Proudly launched for digitizing local traditional dining rooms.</li>
-            </ul>
+          {/* Contact Details Left Column */}
+          <div className="md:col-span-4 space-y-4">
+            <h5 className="text-white font-bold text-xs uppercase tracking-widest">Business Information</h5>
+            
+            <div className="space-y-3 text-xs sm:text-sm">
+              <div className="flex items-start space-x-2">
+                <MapPin className="w-4 h-4 text-amber-500 inline mr-1 flex-shrink-0 mt-0.5" />
+                <span className="leading-relaxed text-stone-400">
+                  Ballal Cir, near RTO Office, Chamarajapura, Mysuru, Karnataka 570005
+                </span>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Phone className="w-4 h-4 text-amber-500 inline mr-1 flex-shrink-0" />
+                <a href="tel:08212330820" className="hover:text-white transition-colors">0821 233 0820</a>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Clock className="w-4 h-4 text-amber-500 inline mr-1 flex-shrink-0" />
+                <span>6:30 AM – 10:30 PM (All Days)</span>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center space-x-3">
+              <a 
+                href="https://www.google.com/maps/search/?api=1&query_place_id=ChIJ776TqABwrzsRJlFuzZSXo-I&query=Mahesh%20Prasad%20Veg%20Restaurant" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="bg-stone-900 border border-stone-800 hover:border-amber-500 text-white px-4 py-2 rounded-lg text-xs font-bold inline-flex items-center space-x-1.5 transition-all"
+              >
+                <Compass className="w-3.5 h-3.5 text-amber-500" />
+                <span>Open Google Maps</span>
+              </a>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert("Share Link Copied to clipboard!");
+                }}
+                className="bg-stone-900 border border-stone-800 hover:border-amber-500 text-stone-400 hover:text-white p-2 rounded-lg transition-all"
+                title="Share Website"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
           </div>
 
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-stone-900 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 font-semibold uppercase tracking-wider">
-          <p>© 2026 Mahesh Prasad Veg Restaurant. All Rights Reserved.</p>
-          <div className="flex gap-4 mt-4 sm:mt-0">
-            <span>Standard South Indian Pure Veg</span>
-            <span>📍 Mysuru Heritage Spot</span>
-          </div>
         </div>
       </footer>
 

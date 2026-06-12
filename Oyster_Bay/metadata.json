@@ -1,6 +1,0 @@
-{
-  "name": "Oyster Bay",
-  "description": "An elegant landing page for Oyster Bay, Mysuru's premier fine dining restaurant.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
