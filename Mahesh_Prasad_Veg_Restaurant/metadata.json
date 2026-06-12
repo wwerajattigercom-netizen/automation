@@ -1,6 +1,6 @@
 {
   "name": "Mahesh Prasad Veg Restaurant",
-  "description": "An elegant and fully responsive online home for Mysuru's beloved heritage vegetarian restaurant—famous for authentic South Indian dosas, filter coffee, and meals.",
+  "description": "Authentic vegetarian South Indian cuisine in Mysuru. Experience traditional Masala Dosa, Filter Coffee, and warm hospitality.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
