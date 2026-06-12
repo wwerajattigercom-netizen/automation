@@ -1,0 +1,6 @@
+{
+  "name": "Mahesh Prasad Veg Restaurant",
+  "description": "Authentic South Indian vegetarian dining in Mysuru, Karnataka.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
