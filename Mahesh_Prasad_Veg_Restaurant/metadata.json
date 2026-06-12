@@ -1,0 +1,6 @@
+{
+  "name": "Mahesh Prasad Veg Restaurant",
+  "description": "An elegant landing page for Mahesh Prasad Veg Restaurant in Mysuru, featuring their menu highlights, contact information, and location.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
