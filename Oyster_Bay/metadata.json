@@ -1,6 +1,6 @@
 {
   "name": "Oyster Bay",
-  "description": "Exquisite fine dining seafood restaurant in Mysuru. Savour gourmet coastal delicacies in an elegant, sophisticated atmosphere.",
+  "description": "An elegant landing page for Oyster Bay, Mysuru's premier fine dining restaurant.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
